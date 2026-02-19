@@ -1,0 +1,19 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.portWin": "COM5",
+  "idf.currentSetup": "C:\\esp\\v5.5.2\\esp-idf",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s3",
+    "OPENOCD_USB_ADAPTER_LOCATION": "1-4"
+  },
+  "clangd.path": "c:\\Espressif\\frameworks\\esp-idf-v5.5.1\\tools\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=c:\\Users\\traverc\\218_Exercises_W26\\15_ultrasonic_sensor\\build"
+  ],
+  "idf.flashType": "UART"
+}
