@@ -3,16 +3,16 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "COM5",
-  "idf.currentSetup": "C:\\esp\\v5.5.2\\esp-idf",
+  "idf.portWin": "COM3",
+  "idf.currentSetup": "C:\\Users\\traverc\\esp\\v5.5.2\\esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
   },
-  "clangd.path": "c:\\Espressif\\frameworks\\esp-idf-v5.5.1\\tools\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
+  "clangd.path": "c:\\Users\\traverc\\esp\\v5.5.2\\esp-idf\\tools\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=c:\\Users\\traverc\\218_Exercises_W26\\15_ultrasonic_sensor\\build"
+    "--compile-commands-dir=c:\\Users\\traverc\\218_Exercises_2026\\15_Ultrasonic_Sensor\\build"
   ],
   "idf.flashType": "UART"
 }
