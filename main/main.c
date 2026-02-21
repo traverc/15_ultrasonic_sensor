@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
-#include "driver/gptimer.h"
+#include "driver/gptimer.h"  //Using gp timer for echo
 #include "esp_log.h"
 #include "esp_timer.h"   //Using esp timer for trigger
 
