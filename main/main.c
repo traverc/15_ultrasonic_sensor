@@ -1,90 +1,76 @@
  
+//Version to use esp timer only
+//Interrupts for both trigger and echo
+//One shot timer for trigger
+//GPIO interrupts for echo
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
-#include "driver/gptimer.h"  //Using gp timer for echo
 #include "esp_log.h"
-#include "esp_timer.h"   //Using esp timer for trigger
-
+#include "esp_timer.h"   //Using esp timer for trigger and echo
 
 #define TRIG GPIO_NUM_11
 #define ECHO GPIO_NUM_12
 #define LOOP_DELAY_MS 1000
 #define GPTIMER_RESOLUTION_HZ  1000000 // 1MHz, 1 tick = 1us
+#define OUT_OF_RANGE_SHORT 116
+#define OUT_OF_RANGE_LONG 23200
 
 static const char *TAG = "example"; //Name used for esp log prints
 
-//Distance defined as a global
-float distance_cm = 0.0;
-
-//Timer for echo configured as a global since it is used by ISR?
-gptimer_handle_t gptimer = NULL;
-gptimer_config_t timer_config = {
-    .clk_src = GPTIMER_CLK_SRC_DEFAULT,
-    .direction = GPTIMER_COUNT_UP,
-    .resolution_hz = GPTIMER_RESOLUTION_HZ, // 1MHz, 1 tick=1us
-};
+//Pulse time calculated in ISR
+uint64_t echo_pulse_time = 0;
 
 //ISR for the echo pulse
 void IRAM_ATTR echo_isr_handler(void* arg) {
     static uint64_t rising_edge_time = 0;
     static uint64_t falling_edge_time = 0;
-    static uint64_t echo_pulse_time = 0;
- //Note: added some error checking to this for distances out of spec
- //2 cm - 400 cm - but should be re-done with macros
     if (gpio_get_level(ECHO) == 1) {
         // store the timestamp when pos edge is detected
-        gptimer_get_raw_count(gptimer, &rising_edge_time);
+        rising_edge_time = esp_timer_get_time();
     } else {
-        // capture the negative edge time and calculate distance
-        gptimer_get_raw_count(gptimer, &falling_edge_time);
+        // capture the negative edge time and compute pulse time
+        falling_edge_time = esp_timer_get_time();
         echo_pulse_time = (falling_edge_time - rising_edge_time); 
-        if ((echo_pulse_time < 116)|| (echo_pulse_time > 23200)) {
-            distance_cm = 1000.0; //indicates error - distance out of range
-        } else {
-        distance_cm = echo_pulse_time/58.0;
-        } 
     }
 } 
 
 //ISR for the trigger pulse
-static void oneshot_timer_callback(void* arg)
+void IRAM_ATTR oneshot_timer_callback(void* arg) 
 {
-    ESP_LOGI(TAG, "One-shot timer called, time since boot: %lld us", esp_timer_get_time());
     gpio_set_level(TRIG, 0);
 }
-
 void hc_sr04_init(); // Initialization function for sensor
 
 void app_main(void)
 {
+    float distance_cm = 0.0;
     //Configure the TRIG and ECHO pins
     hc_sr04_init();
     
-    /* Create one-shot esp timer for trigger  - does not need to be global?   */
+    // Create one-shot esp timer for trigger 
     const esp_timer_create_args_t oneshot_timer_args = {
             .callback = &oneshot_timer_callback,
             .name = "one-shot"
     };
     esp_timer_handle_t oneshot_timer;
     ESP_ERROR_CHECK(esp_timer_create(&oneshot_timer_args, &oneshot_timer));
-
-    // Create a GP timer instance for echo
-    gptimer_new_timer(&timer_config, &gptimer);
-    ESP_LOGI(TAG, "Enable timer");
-    ESP_ERROR_CHECK(gptimer_enable(gptimer));
-    // Start the timer
-    ESP_ERROR_CHECK(gptimer_start(gptimer)); 
     
     while(1) {
-        // Send trigger pulse
-        ESP_LOGI(TAG, "Send trigger with esp timer");
-
+        // Set trigger pin high and start 1-shot 10us timer
         gpio_set_level(TRIG, 1);
         ESP_ERROR_CHECK(esp_timer_start_once(oneshot_timer, 10));
-        ESP_LOGI(TAG, "Started one-shot timer, time since boot: %lld us", esp_timer_get_time());
 
-        vTaskDelay(20/portTICK_PERIOD_MS); //wait past echo pulse to print distance
+        vTaskDelay(20/portTICK_PERIOD_MS); //wait past echo pulse to calculate distance
+         if (echo_pulse_time < OUT_OF_RANGE_SHORT) {
+            distance_cm = 0.0; 
+        } else {
+            if (echo_pulse_time > OUT_OF_RANGE_LONG) {
+                distance_cm = 1000.0; //indicates error - distance out of range
+            } else {
+                distance_cm = echo_pulse_time/58.3;
+            } 
+        }
         ESP_LOGI(TAG, "Distance in cm: %.1f", distance_cm);
         vTaskDelay(LOOP_DELAY_MS/portTICK_PERIOD_MS); //loop time 1s
     }

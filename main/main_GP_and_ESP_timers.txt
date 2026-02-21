@@ -1,3 +1,4 @@
+ 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
@@ -29,7 +30,6 @@ void IRAM_ATTR echo_isr_handler(void* arg) {
     static uint64_t rising_edge_time = 0;
     static uint64_t falling_edge_time = 0;
     static uint64_t echo_pulse_time = 0;
-
  //Note: added some error checking to this for distances out of spec
  //2 cm - 400 cm - but should be re-done with macros
     if (gpio_get_level(ECHO) == 1) {
@@ -50,9 +50,8 @@ void IRAM_ATTR echo_isr_handler(void* arg) {
 //ISR for the trigger pulse
 static void oneshot_timer_callback(void* arg)
 {
+    ESP_LOGI(TAG, "One-shot timer called, time since boot: %lld us", esp_timer_get_time());
     gpio_set_level(TRIG, 0);
-    int64_t time_since_boot = esp_timer_get_time();
-    ESP_LOGI(TAG, "One-shot timer called, time since boot: %lld us", time_since_boot);
 }
 
 void hc_sr04_init(); // Initialization function for sensor
