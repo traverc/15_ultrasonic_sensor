@@ -72,21 +72,3 @@ void app_main(void)
         vTaskDelay(LOOP_DELAY_MS/portTICK_PERIOD_MS); //loop time 1s
     }
 }
-
-void hc_sr04_init() {
-    //Trigger is an output, initially 0
-	gpio_reset_pin(TRIG);
-	gpio_set_direction(TRIG, GPIO_MODE_OUTPUT);
-	gpio_set_level(TRIG, 0); // Ensure trig is low initially
-
-    // Configure echo to interrupt on both edges. 
-    gpio_reset_pin(ECHO);
-    gpio_set_direction(ECHO, GPIO_MODE_INPUT);
-    gpio_set_intr_type(ECHO, GPIO_INTR_ANYEDGE);
-    gpio_intr_enable(ECHO);  //Enable interrupts on ECHO
-    gpio_install_isr_service(0);  //Creates global ISR that catches all GPIO interrupts
-    
-    //Dispatch pin handler for ECHO
-    ESP_ERROR_CHECK(gpio_isr_handler_add(ECHO, echo_isr_handler, NULL)); 
-
-}
